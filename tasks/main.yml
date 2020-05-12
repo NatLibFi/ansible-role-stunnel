@@ -1,0 +1,27 @@
+- name: Install stunnel
+  package:
+    name: stunnel4
+    state: present
+
+- name: Configure stunnel
+  template:
+    src: stunnel.conf.j2
+    dest: /etc/stunnel/stunnel.conf
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  register: stunnel_conf
+
+- name: Enable stunnel
+  lineinfile:
+    path: /etc/default/stunnel4
+    regexp: '^ENABLED=0$'
+    line: 'ENABLED=1'
+  register: stunnel_enabled
+  when: not skip_stunnel_setting|default(False)|bool
+
+- name: Restart stunnel
+  systemd:
+    state: restarted
+    name: stunnel4
+  when: stunnel_conf.changed or stunnel_enabled.changed

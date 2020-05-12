@@ -1,0 +1,2 @@
+stunnel_forward_port: 6002
+stunnel_listen_port: 6001

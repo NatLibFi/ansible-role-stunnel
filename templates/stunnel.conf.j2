@@ -1,0 +1,10 @@
+setuid = stunnel4
+setgid = stunnel4
+pid = /var/run/stunnel4/stunnel.pid
+output = /var/log/stunnel4/stunnel.log
+
+[default-tunnel]
+connect = {{ stunnel_forward_port }}
+accept = {{ stunnel_listen_port }}
+cert = /etc/stunnel/stunnel.crt
+key = /etc/stunnel/stunnel.key
