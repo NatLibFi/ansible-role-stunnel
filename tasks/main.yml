@@ -1,26 +1,47 @@
-- name: Install stunnel
-  package:
-    name: stunnel4
-    state: present
+- name: Check that stunnel {{ stunnel_listen_key}} exists
+  stat:
+    path: "{{stunnel_listen_key}}"
+  register: stat_key_exists
 
-- name: Configure stunnel
-  template:
-    src: stunnel.conf.j2
-    dest: /etc/stunnel/stunnel.conf
-    owner: root
-    group: root
-    mode: u=rw,g=r,o=r
-  register: stunnel_conf
+- name: Check that stunnel {{stunnel_listen_cert}} exists
+  stat:
+    path: "{{stunnel_listen_cert}}"
+  register: stat_cert_exists
 
-- name: Enable stunnel
-  lineinfile:
-    path: /etc/default/stunnel4
-    regexp: '^ENABLED=0$'
-    line: 'ENABLED=1'
-  register: stunnel_enabled
+- name: Check if stunnel have all prerequisites
+  fail:
+    msg: 'Stunnel service not possible because {{ stunnel_listen_key}} or {{stunnel_listen_cert}} are absent on {{inventory_hostname_short}} server'
+  ignore_errors: yes
+  when: not stat_cert_exists.stat.exists or not stat_key_exists.stat.exists
 
-- name: Restart stunnel
-  systemd:
-    state: restarted
-    name: stunnel4
-  when: stunnel_conf.changed or stunnel_enabled.changed
+- name: Install, configure, and start Apache
+  block:
+
+    - name: Enable stunnel
+      lineinfile:
+        path: /etc/default/stunnel4
+        regexp: '^ENABLED=0$'
+        line: 'ENABLED=1'
+      register: stunnel_enabled
+
+    - name: Install stunnel
+      package:
+        name: stunnel4
+        state: present
+
+    - name: Configure stunnel
+      template:
+        src: stunnel.conf.j2
+        dest: /etc/stunnel/stunnel.conf
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+      register: stunnel_conf
+
+    - name: Restart stunnel
+      systemd:
+        state: restarted
+        name: stunnel4
+      when: stunnel_conf.changed or stunnel_enabled.changed
+
+  when: stat_cert_exists.stat.exists and stat_key_exists.stat.exists

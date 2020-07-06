@@ -6,5 +6,5 @@ output = /var/log/stunnel4/stunnel.log
 [default-tunnel]
 connect = {{ stunnel_forward_port }}
 accept = {{ stunnel_listen_port }}
-cert = /etc/stunnel/stunnel.crt
-key = /etc/stunnel/stunnel.key
+cert = {{ stunnel_listen_cert }} 
+key = {{ stunnel_listen_key }} 
